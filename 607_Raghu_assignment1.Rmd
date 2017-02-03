@@ -1,0 +1,62 @@
+---
+title: "607_Raghu_assignment1"
+author: "Raghu Ramnath"
+date: "2/1/2017"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mushroom data set
+
+Load the .csv file into a data frame.
+
+```{r 1}
+#retrieve and load data into a data.frame 
+
+M <- "https://raw.githubusercontent.com/raghu74us/607_1/master/agaricus-lepiota.data"
+mushrooms <- read.table(file = M, header = FALSE, sep = ",") 
+head(mushrooms) 
+summary(mushrooms)
+```
+
+Rename the columns according to data description
+
+```{r 2}
+
+colnames(mushrooms) <- c( "classes","cap-shape", "cap-surface","cap-color", "bruises", "odor","gill-attachment","gill-spacing","gill-size","gill-color","stalk-shape","stalk-root",
+"stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring","stalk-color-below-ring","veil-type","veil-color","ring-number","ring-type","spore-print-color","population","habitat" )
+
+head(mushrooms)
+```
+
+Replace code with identifiers
+
+```{r 3}
+require(dplyr)
+require(car)
+
+mush_class <- as.vector(recode(mushrooms[,1], " 'e' = 'edible'; 'p' = 'poisonous'")) 
+
+cap_color <- as.vector(recode(mushrooms[,4], " 'n' = 'brown'; 'b' = 'buff'; 'c' = 'cinnamon'; 'g' = 'gray'; 'r' = 'green'; 'p' = 'pink'; 'u' = 'purple'; 'e' = 'red'; 'w' = 'white'; 
+                              'y' = 'yellow'")) 
+
+veil_color <- as.vector(recode(mushrooms[,18], "'n' = 'brown'; 'o' = 'orange'; 'w' = 'white'; 'y' = 'yellow'")) 
+
+spore_color <- as.vector(recode(mushrooms[,21], "'k' = 'black'; 'n' = 'brown'; 'b' = 'buff'; 'h' = 'chocolate'; 'r' = 'green'; 'o' = 'orange'; 'u' = 'purple'; 'w' = 'white'; 'y' = 'yellow'"))
+
+```
+
+Create data frame with the above 4 fields for which code is replaced with identifiers.
+
+```{r 4}
+
+m_colors <- as.data.frame(cbind(mush_class, cap_color, veil_color, spore_color)) 
+class(m_colors)
+summary(m_colors)
+
+```
