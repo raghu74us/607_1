@@ -1,0 +1,96 @@
+---
+title: "Raghu_607_Rsqlwk2_Assignment"
+author: "Raghu Ramnath"
+date: "2/7/2017"
+output: html_document
+---
+
+#Data Retrieval
+
+Load R Packages
+
+```{r step1}
+#library(RMySQL)
+#library(getPass)
+#library(plotly)
+
+require(RMySQL)
+require(getPass)
+require(plotly)
+```
+
+# Connect to Database
+
+```{r step0, include=FALSE}
+
+movie_db = dbConnect(MySQL(), user='root', password='test123', dbname='moviereview', host='localhost')
+```
+
+```{r step2}
+
+# Uncomment the below commend. Enter user name and password to connect to your database.
+
+#movie_db = dbConnect(MySQL(), user=getPass(msg = 'Enter username'), password= getPass('Enter Password'), dbname='moviereview')
+
+# Load the scripts to create tables(movie_db, review_db) and insert data into the tables.
+# https://github.com/raghu74us/607_1/blob/master/moview_db.sql
+
+```
+
+#Retrieve Data from Mysql database and Store in R DataFrames
+```{r step3}
+# List the movies and netflix ratings from movie table.
+movie_sql = "Select movie_id,title,netflix_rating FROM movie_db;"
+movie_df <- dbGetQuery(movie_db, movie_sql)
+
+knitr::kable(movie_df)
+
+```
+
+#Retrive the individual user ratings for the movies.
+```{r step4}
+
+rating_sql <- "Select * FROM review_db;"
+rating_df <- dbGetQuery(movie_db, rating_sql)
+knitr:: kable(rating_df)
+
+```
+
+#Get the Average user rating for the movies.
+```{r step5}
+
+compare_rating <- "select a.movie_id,a.title,  round( (sum(b.rating)/count(b.rating)),2) Average_rating
+from movie_db a,
+	 review_db b 
+where a.movie_id = b.movie_id
+group by a.movie_id,a.title ;"
+
+compare_df <- dbGetQuery(movie_db, compare_rating)
+knitr:: kable(compare_df)
+
+```
+
+#Compare the Netflix rating and User ratings for the movies.
+```{r step6}
+ratings_compare <- merge(compare_df,movie_df)
+ratings_compare$diff <-  movie_df$netflix_rating - compare_df$Average_rating
+knitr:: kable(ratings_compare)
+
+```
+
+
+#Plot the Graph for Net flix rating vs user rating.
+```{r step7}
+trace_0 <- ratings_compare$netflix_rating
+trace_1 <- ratings_compare$Average_rating
+
+x <- ratings_compare$title
+
+data <- data.frame(x, trace_0, trace_1)
+
+p <- plot_ly(data, x = ~x, y = ~trace_0, name = 'Netflix Rating', type = 'scatter', mode = 'markers') %>%
+add_trace(y = ~trace_1, name = 'User Rating', mode = 'markers')
+
+p
+
+```
