@@ -1,0 +1,119 @@
+---
+title: "Raghu_607_wk3_DP"
+author: "Raghu Ramnath"
+date: "2/14/2017"
+output: html_document
+---
+
+#607 Week3 Assignment
+Problems 3 and 4 from chapter 8 of Automated Data Collection in R.
+
+Problem3: Here is the referenced code for the introductory example in #3:
+
+3. Copy the introductory example. The vector name stores the extracted names.
+
+```{r s3, include=TRUE}
+#Load package
+library(stringr)
+raw.data <-"555-1239Moe Szyslak(636) 555-0113Burns, C. Montgomery555-6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Julius Hibbert"   
+
+raw.data
+
+name <- unlist(str_extract_all(raw.data, "[[:alpha:]., ]{2,}"))
+
+phone <- unlist(str_extract_all(raw.data, "\\(?(\\d{3})?\\)?(-| )?\\d{3}(-| )?\\d{4}"))
+
+name
+phone
+```
+
+3.1. Use the tools of this chapter to rearrange the vector so that all elements conform to the standard first_name last_name.
+
+```{r s3.1, include=TRUE}
+# remove initials
+name2 <- sub(" [A-z]{1}\\. "," ",name)  
+name2
+# switch last,first to first last
+name3 <- sub("(\\w+),\\s(\\w+)","\\2 \\1", name2)  
+name3
+# remove titles
+name4 <- sub("[A-z]{2,3}\\. ","",name3)  
+name4
+```
+
+3.2. Construct a logical vector indicating whether a character has a title.
+
+```{r s3.2, include=TRUE}
+
+title_yn <- str_detect(name3,"[A-z]{2,3}\\. ")
+df <- data.frame(name3,title_yn)
+df
+```
+
+3.3. Construct a logical vector indicating whether a character has a second name
+
+```{r s3.3, include=TRUE}
+second_name <- str_detect(name," [A-z]{1}\\. ")
+df <- data.frame(name,second_name)
+df
+
+```
+#Problem 4
+
+4. Describe the types of strings that conform to the following regular expressions and construct an example that is matched by the regular expression.
+4.1. [0-9]+\\$
+```{r s4.1, include=TRUE}
+#This expression describes string of one or more digits followed by dollar sign.
+pattern="[0-9]+\\$"
+examples=c("123$43","xyz123$9","XYZ$")
+str_detect(examples,pattern)
+```
+
+4.2. \\b[a-z]{1,4}\\b
+```{r s4.2, include=TRUE}
+#This expression describes string of one to four lower case letters.
+words="\\b[a-z]{1,4}\\b"
+examples=c("piG2","CAT","dogs")
+str_detect(examples,words)
+```
+
+4.3. .*?\\.txt$
+```{r s4.3, include=TRUE}
+#This expression describes a string ending in “.txt”.
+pattern=".*?\\.txt$"
+examples=c(".txt","test.txt","abc/123.txt","a$b#1.txt")
+str_detect(examples,pattern)
+
+```
+
+4.4. \\d{2}/\\d{2}/\\d{4}
+```{r s4.4, include=TRUE}
+#This expression describes 2 digits followed by a forward slash, 2 more digits, another forward slash, and four more digits like a date format 02/14/2017
+pattern="\\d{2}/\\d{2}/\\d{4}"
+examples=c("02/14/2017","DD11/12MM/2020RR")
+str_detect(examples,pattern)
+
+```
+
+4.5. <(.+?)>.+?</\\1>
+```{r s4.5, include=TRUE}
+#This expression describes XML tags.
+pattern="<(.+?)>.+?</\\1>"
+examples=c("<tag>Text</tag>","<tag>123</tag>")
+str_detect(examples,pattern)
+```
+Problem 9
+
+9. The following code hides a secret message. Crack it with R and regular expressions. Hint: Some of the characters are more revealing than others! The code snippet is also available in the materials at www.r-datacollection.com.
+
+```{r s9, include=TRUE}
+hidden <- "clcopCow1zmstc0d87wnkig7OvdicpNuggvhryn92Gjuwczi8hqrfpRxs5Aj5dwpn0TanwoUwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4Sfek.r1w1YwwojigOd6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr"
+
+unlist(str_extract_all(hidden, "[A-Z]"))
+
+unlist(str_extract_all(hidden, "[a-z]"))
+
+unlist(str_extract_all(hidden, "[0-9]"))
+
+#The hidden message is revealed by extracting just the uppercase characters
+```
