@@ -1,0 +1,8 @@
+name: Publish Document
+title:
+account: rpubs
+server: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/250049/a5c30bbfef1745719eb480f0fa073b00
+bundleId: https://api.rpubs.com/api/v1/document/250049/a5c30bbfef1745719eb480f0fa073b00
+url: http://rpubs.com/raghu_74us/250049
+when: 1487384643.15569

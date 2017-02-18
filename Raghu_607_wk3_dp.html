@@ -146,6 +146,7 @@ name</code></pre>
 <pre class="r"><code>phone</code></pre>
 <pre><code>## [1] &quot;555-1239&quot;       &quot;(636) 555-0113&quot; &quot;555-6542&quot;       &quot;555 8904&quot;      
 ## [5] &quot;636-555-3226&quot;   &quot;5553642&quot;</code></pre>
+<pre class="r"><code>#phone number is in the format XXX-XXX-XXXX</code></pre>
 <p>3.1. Use the tools of this chapter to rearrange the vector so that all elements conform to the standard first_name last_name.</p>
 <pre class="r"><code># remove initials
 name2 &lt;- sub(&quot; [A-z]{1}\\. &quot;,&quot; &quot;,name)  
@@ -154,6 +155,7 @@ name2</code></pre>
 ## [4] &quot;Ned Flanders&quot;         &quot;Simpson, Homer&quot;       &quot;Dr. Julius Hibbert&quot;</code></pre>
 <pre class="r"><code># switch last,first to first last
 name3 &lt;- sub(&quot;(\\w+),\\s(\\w+)&quot;,&quot;\\2 \\1&quot;, name2)  
+# two names has &quot;,&quot; which need to be switched.
 name3</code></pre>
 <pre><code>## [1] &quot;Moe Szyslak&quot;          &quot;Montgomery Burns&quot;     &quot;Rev. Timothy Lovejoy&quot;
 ## [4] &quot;Ned Flanders&quot;         &quot;Homer Simpson&quot;        &quot;Dr. Julius Hibbert&quot;</code></pre>
@@ -173,6 +175,7 @@ df</code></pre>
 ## 4         Ned Flanders    FALSE
 ## 5        Homer Simpson    FALSE
 ## 6   Dr. Julius Hibbert     TRUE</code></pre>
+<pre class="r"><code># two of the name has title of which one is 2 char and the other is 3 char</code></pre>
 <p>3.3. Construct a logical vector indicating whether a character has a second name</p>
 <pre class="r"><code>second_name &lt;- str_detect(name,&quot; [A-z]{1}\\. &quot;)
 df &lt;- data.frame(name,second_name)
@@ -184,6 +187,7 @@ df</code></pre>
 ## 4         Ned Flanders       FALSE
 ## 5       Simpson, Homer       FALSE
 ## 6   Dr. Julius Hibbert       FALSE</code></pre>
+<pre class="r"><code># One name has a middle name.</code></pre>
 </div>
 <div id="problem-4" class="section level1">
 <h1>Problem 4</h1>
@@ -219,7 +223,9 @@ pattern=&quot;&lt;(.+?)&gt;.+?&lt;/\\1&gt;&quot;
 examples=c(&quot;&lt;tag&gt;Text&lt;/tag&gt;&quot;,&quot;&lt;tag&gt;123&lt;/tag&gt;&quot;)
 str_detect(examples,pattern)</code></pre>
 <pre><code>## [1] TRUE TRUE</code></pre>
-<p>Problem 9</p>
+</div>
+<div id="problem-9" class="section level1">
+<h1>Problem 9</h1>
 <ol start="9" style="list-style-type: decimal">
 <li>The following code hides a secret message. Crack it with R and regular expressions. Hint: Some of the characters are more revealing than others! The code snippet is also available in the materials at www.r-datacollection.com.</li>
 </ol>

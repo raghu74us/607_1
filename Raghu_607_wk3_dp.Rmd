@@ -3,6 +3,8 @@ title: "Raghu_607_wk3_DP"
 author: "Raghu Ramnath"
 date: "2/14/2017"
 output: html_document
+highlight: pygments
+theme: cerulean
 ---
 
 #607 Week3 Assignment
@@ -25,6 +27,7 @@ phone <- unlist(str_extract_all(raw.data, "\\(?(\\d{3})?\\)?(-| )?\\d{3}(-| )?\\
 
 name
 phone
+#phone number is in the format XXX-XXX-XXXX
 ```
 
 3.1. Use the tools of this chapter to rearrange the vector so that all elements conform to the standard first_name last_name.
@@ -35,6 +38,7 @@ name2 <- sub(" [A-z]{1}\\. "," ",name)
 name2
 # switch last,first to first last
 name3 <- sub("(\\w+),\\s(\\w+)","\\2 \\1", name2)  
+# two names has "," which need to be switched.
 name3
 # remove titles
 name4 <- sub("[A-z]{2,3}\\. ","",name3)  
@@ -48,6 +52,7 @@ name4
 title_yn <- str_detect(name3,"[A-z]{2,3}\\. ")
 df <- data.frame(name3,title_yn)
 df
+# two of the name has title of which one is 2 char and the other is 3 char
 ```
 
 3.3. Construct a logical vector indicating whether a character has a second name
@@ -56,7 +61,7 @@ df
 second_name <- str_detect(name," [A-z]{1}\\. ")
 df <- data.frame(name,second_name)
 df
-
+# One name has a middle name.
 ```
 #Problem 4
 
@@ -102,7 +107,7 @@ pattern="<(.+?)>.+?</\\1>"
 examples=c("<tag>Text</tag>","<tag>123</tag>")
 str_detect(examples,pattern)
 ```
-Problem 9
+#Problem 9
 
 9. The following code hides a secret message. Crack it with R and regular expressions. Hint: Some of the characters are more revealing than others! The code snippet is also available in the materials at www.r-datacollection.com.
 
