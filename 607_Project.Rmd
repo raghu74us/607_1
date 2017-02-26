@@ -1,0 +1,78 @@
+---
+title: "607_Project"
+author: "Raghu Ramnath"
+date: "2/14/2017"
+output: html_document
+theme: cerulean
+highlight: pygments
+---
+
+# 607 Reg Ex Project 1 
+
+#1. Read the Tourist information text file
+
+```{r step1, include=TRUE}
+library(stringr)
+getwd()
+#Read the tourist info file
+tour <-read.csv(("/Users/Raghu/tournamentinfo.txt"), header=F)
+#Display the first 10 lines
+head(tour,10)
+#Display the last 10 lines
+tail(tour,10)
+```
+
+#2. Create a list by removing the column names and "---" lines above and below column names.
+
+```{r step2, include=TRUE}
+tour <- tour[-c(1:4),]
+head(tour)
+```
+
+#3. Read the number lines list (that has player information) separately and rating list separately.
+
+```{r step3, include=TRUE}
+player <- tour[seq(1, length(tour), 3)]
+player
+length(player)
+rating <- tour[seq(2, length(tour), 3)]
+length(rating)
+```
+
+#4. Extract the required column names by identifying the pattern from the string.
+
+```{r step4, include=TRUE}
+pairNo <- as.integer(str_extract(player, "\\d+"))  #matches the digits
+Name <- str_trim(str_extract(player, "(\\w+\\s){2,3}"))   #matches the word
+Points <- as.numeric(str_extract(player, "\\d+\\.\\d+"))  #matches the digits with a dot.
+Opponents <- str_extract_all(str_extract_all(player, "\\d+\\|"), "\\d+") #matches digits with pipe and pick only the digits which is the id of opponent.
+
+Won <- str_count(player, "\\Q|W  \\E")   #count of W
+Loose <- str_count(player, "\\Q|L  \\E")  #count of L
+Draw <- str_count(player, "\\Q|D  \\E")   #count of D
+
+State <- str_extract(rating, "\\w+")  
+Ratings <- as.integer(str_extract(str_extract(rating, "[^\\d]\\d{3,4}[^\\d]"
+                                             ), "\\d+"))  # identify the string that has numbers with either 3 or 4 digits and char concatenated. pick only the first set of digits.
+```
+
+# 5. Group the required fields. calculate the mean rating. 
+
+```{r step5, include=TRUE}
+mRating <- length(player)
+mRating
+for (i in 1:length(player)) { 
+  mRating[i] <- round(mean(Ratings[as.numeric(unlist(Opponents[pairNo[i]]))]), digits = 0);  
+                            }
+opData <- data.frame(Name, State, Points,Ratings,mRating,  Won, Loose, Draw);
+
+colnames(opData) <- c("Player's Name", "State", "Total Points", "Player's Pre-Rating", " Average Pre Chess Rating of Opponents", "Won", "Lost", "Draw")
+knitr::kable(opData)
+
+```
+
+#6. Write the data into csv file
+
+```{r step6, include=TRUE}
+   write.csv( opData, "/Users/Raghu/tour.csv")
+```
