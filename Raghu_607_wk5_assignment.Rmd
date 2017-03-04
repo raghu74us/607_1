@@ -1,0 +1,72 @@
+---
+title: "607_wk5_assignment"
+author: "Raghu Ramnath"
+date: "3/1/2017"
+output: html_document
+highlight: pygments
+theme: cerulean
+---
+
+## Overview: Working with Tidy Data. 
+
+This assignment will consider a wide dataset describing arrival delays for two airlines across five destinations. The purpose of this assignment is to use the tidyr and dplyr packages to tidy and transform the flights datatset and perform comparative analysis of the two airlines.
+
+## Load the following libraries
+```{r s1, include=TRUE}
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Read the the airline csv file from GitHub
+```{r s2, include=TRUE}
+
+flight_schedule <- read.csv(file="https://raw.githubusercontent.com/raghu74us/607_1/master/flt.csv", header=TRUE, sep=",")
+
+flight_schedule
+str(flight_schedule)
+#change the name of the 1st two columns
+names(flight_schedule)[1:2] <- c('Airlines','Status')
+flight_schedule
+
+```
+
+## Tidy the dataset using tidyr
+
+```{r s3, include=TRUE}
+#filter -- selected rows
+#arrange  -- reorder rows
+#mutate -- add variables or columns
+#gather --gather the non-variable columns into a two-column key-value pair(wide to short).
+#spread -- opposite of gather
+Tidy1<-gather(flight_schedule, "City","Flights",3:7) %>%
+  filter(Airlines == 'Alaska' || Airlines == 'AM WEST' ) %>%
+  spread( Status, Flights) %>% 
+  mutate( City = gsub( "\\.", " ", City), 
+          percent_delayed=round( ((delayed/(delayed+`on time`))*100),2)
+                                                          ) %>%
+  arrange(City, Airlines)
+Tidy1
+
+```
+
+##Plot the Data and analyze
+```{r s4, include=TRUE}
+
+Tidy1 %>% ggplot( aes(x=percent_delayed, y=City)) + 
+    geom_segment(aes(yend=City), xend=0, color='blue') + 
+    geom_point(size=4, aes(color=Airlines)) + 
+    geom_text(aes(label=percent_delayed), vjust=-1, hjust=.5,color='black') +
+    scale_color_brewer(palette="Set2", limits=c('Alaska', 'AM WEST')) + 
+     ggtitle("Percentage of Flights Delayed by Airline by City") +
+    xlab("Percentage of Flights Delayed") + ylab("City") 
+
+```
+
+
+##Conclusion:
+
+Based on the data, we can see that %delay of Alaska airlines is lower compared to AM West.
+Also, SFO has the highest delay and phoneix has the lower percentage delay.
+On an average, there is a 7% difference in delay between the two airlines.
