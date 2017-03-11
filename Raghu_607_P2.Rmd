@@ -1,0 +1,262 @@
+---
+title: "Raghu_607_Project2"
+author: "Raghu Ramnath"
+date: "3/11/2017"
+output: html_document
+theme: united 
+
+---
+# Dataset 1: New York City Leading Causes of Death
+
+##DataSet Information:
+
+The leading causes of death by sex and ethnicity in New York City since 2007.
+
+The data can be downloaded from https://data.cityofnewyork.us/api/views/jb7j-dtam/rows.csv?accessType=DOWNLOAD
+
+
+##Attribute Information:
+* Year	
+ 
+* Leading.Cause	
+ 
+* Sex
+ 
+* Race.Ethnicity
+ 
+* Deaths
+ 
+* Death.Rate
+ 
+* Age.Adjusted.Death.Rate
+
+## Load the file from the URL.
+```{r s0, include=TRUE}
+require(dplyr)
+require(tidyr)
+require(knitr)
+require(ggplot2)
+nyc_data<-read.csv("https://data.cityofnewyork.us/api/views/jb7j-dtam/rows.csv?accessType=DOWNLOAD", sep = ",")
+
+str(nyc_data)
+
+nyc_data <- subset(nyc_data, nyc_data$Deaths != '.')
+
+str(nyc_data)
+
+```
+There are 956 observations after removing rows with "." and 7 columns.
+
+##Analysis:
+##1. Find the leading cause of death since 2007 for both males and female
+
+```{r s1, include=TRUE}
+        analysis1 <- nyc_data  %>%
+      select(Year, Sex, Leading.Cause, DeathCount = ((as.numeric(as.character(Deaths)) ))) %>% 
+      group_by(Year, Sex, Leading.Cause) %>% 
+      summarise ( Total = sum(as.numeric(as.character(DeathCount))) )  %>%
+            select(Year, Sex, Leading.Cause,Total) %>%
+           arrange((Year), Sex ) %>%
+           top_n(1,Total)   
+           
+
+           kable(analysis1)
+```
+
+## 2. Find the leading cause of death since 2007 by Race.Ethnicity
+
+```{r s2, include=TRUE}
+           analysis2 <- nyc_data  %>%
+select(Year, Ethnicity=Race.Ethnicity, Leading.Cause, DeathCount=(as.numeric(as.character(Deaths)) )) %>% 
+           group_by(Year, Ethnicity,Leading.Cause) %>% 
+    summarise ( Total = sum(as.numeric(as.character(DeathCount))) )  %>%
+            select(Year, Ethnicity, Leading.Cause, Total) %>%
+           arrange(desc(Year), Ethnicity,Leading.Cause) %>%
+           top_n(1,Total) 
+           
+          kable(analysis2)
+```
+
+## 3. Since heart disease was the leading cause, find the count of this disease since 2007.
+
+```{r s3, include=TRUE}
+
+        wide <- nyc_data %>% 
+        select(Year, Leading.Cause, Deaths) %>% 
+        filter(Leading.Cause == "Diseases of Heart (I00-I09, I11, I13, I20-I51)") %>%
+        group_by(Year, Leading.Cause) %>%
+        summarise ( Total = sum(as.numeric(as.character(Deaths) )  )) %>%
+        spread(Year, Total)  
+   
+        kable(wide)
+       
+```
+
+###Conclusion: The disease rate is decreasing in a very slower phase.
+
+# Dataset 2: Projected Population 2010-2040 - Total By Age Groups
+
+##DataSet Information:
+
+Projected total New York City population for five intervals from 2010 through 2040 by Borough, broken down by 18 age cohorts. (Age groups may not add up to the total due to rounding.)
+
+The data set can be downloaded from https://data.cityofnewyork.us/api/views/97pn-acdf/rows.csv?accessType=DOWNLOAD
+
+
+##Attribute Information:
+
+* Borough
+
+* Age
+
+* 2010
+
+* 2015
+
+* 2020
+
+* 2025
+
+* 2030
+
+* 2035
+
+* 2040
+
+## Load the file from the URL.
+```{r s4, include=TRUE}
+population<-read.csv("https://data.cityofnewyork.us/api/views/97pn-acdf/rows.csv?accessType=DOWNLOAD", sep = ",")
+
+str(population)
+
+```
+
+This data set has 114 observations and 9 columns.
+
+#Analysis:
+##1. Analyze the projected population in 2020 for all 5 Boroughs in different age groups.
+
+```{r s5, include=TRUE}
+   
+    head(population)
+
+# remove the rows with total in columns Borough and Age.
+
+    analysis2.1 <- population  %>%
+        select(Borough,Age,X2020 ) %>%      
+         filter( Borough != "NYC Total" ) %>% 
+         filter( Age != "Total" ) %>% 
+         spread(Age,X2020)
+
+         kable(analysis2.1)
+```
+
+##2. Analyze the projected percentage change in population between 2020 and 2040 for all 5 Boroughs.
+
+```{r s6, include=TRUE}
+    analysis2.2 <- population  %>%
+        select(Borough,Age,X2020,X2040 ) %>%      
+         filter( Borough != "NYC Total" ) %>% 
+         filter( Age == "Total" ) %>% 
+         select(Borough,X2020,X2040) %>% 
+          mutate(Pct.Change = round(((X2040 - X2020)/X2040) * 100, 2)) %>%
+           rename(Year_2020=X2020, Year_2040=X2040) 
+       
+           kable(analysis2.2)
+```
+
+# Dataset 3: SAT Results
+
+##DataSet Information:
+
+The most recent school level results for New York City on the SAT. Results are available at the school level for the graduating seniors of 2012. Records contain 2012 College-bound seniors mean SAT scores taken during SY 2012.
+
+The data set can be downloaded from the below URL:
+https://data.cityofnewyork.us/api/views/f9bf-2cp4/rows.csv?accessType=DOWNLOAD
+
+##Attribute Information:
+
+* DBN
+
+* SCHOOL NAME
+
+* Num of SAT Test Takers
+
+* SAT Critical Reading Avg. Score
+
+* SAT Math Avg. Score
+
+* SAT Writing Avg. Score
+
+
+
+## Load the file from the URL.
+```{r s7, include=TRUE}
+sat_result<-read.csv("https://data.cityofnewyork.us/api/views/f9bf-2cp4/rows.csv?accessType=DOWNLOAD", sep = ",")
+
+str(sat_result)
+
+```
+
+#Tidy the data set.
+```{r s8, include=TRUE}
+# remove the rows that does not have scores
+sat_result1 <- sat_result %>% 
+               filter(Num.of.SAT.Test.Takers != 's' )
+
+str(sat_result1)
+# split the DBN column to School district and code
+school_District <- substring(sat_result1$DBN,1,3 )
+school_code <- substring(sat_result1$DBN,4,6 )
+
+#change the name of the columns
+names(sat_result1)[3:6] <- c('No_of_SAT_takers','Reading_Score','Math_Score','Writing_Score')
+
+sat_result2 <- sat_result1 %>%
+  mutate(school_District, school_code) %>%
+  select(school_District, school_code,SCHOOL.NAME,No_of_SAT_takers,Reading_Score,Math_Score,Writing_Score )
+
+str(sat_result1) 
+```
+This data set has 421 observations and 6 columns.
+
+#1. Rank the schools by math score, reading and writing score. Find the top 10 schools.
+
+```{r s9, include=TRUE}
+sat_result2$school_District = as.factor(sat_result2$school_District)
+sat_result2$Reading_Score = as.numeric(sat_result2$Reading_Score)
+sat_result2$Math_Score  = as.numeric(sat_result2$Math_Score )
+sat_result2$Writing_Score = as.numeric(sat_result2$Writing_Score)
+
+school_Rank<-round(rank( -(sat_result2$Reading_Score+sat_result2$Math_Score+sat_result2$Writing_Score )))
+
+sat_result3 <- sat_result2 %>%
+  mutate(school_Rank) %>%
+  select(school_District, school_code,SCHOOL.NAME,No_of_SAT_takers,Reading_Score,Math_Score,Writing_Score,school_Rank ) %>%
+  arrange(school_Rank) %>%
+  top_n(-10,school_Rank)
+
+kable(sat_result3)
+
+```
+
+
+#2. Find the Top5 school district by aggregating the math score, reading and writing score.
+```{r s10, include=TRUE}
+
+Total_score = (sat_result2$Reading_Score + sat_result2$Math_Score + sat_result2$Writing_Score)
+
+sat_result4 <- sat_result2 %>%
+ select( school_District, Reading_Score,Math_Score ,Writing_Score  ) %>%
+  mutate(Total_score) %>%  
+   group_by ( school_District)  %>% 
+      summarise(Avg_Reading_Score = round(mean(Reading_Score)), Avg_math_Score = round(mean(Math_Score)), Avg_writing_Score=round(mean(Writing_Score)), Totals = round(mean(Total_score))) %>%
+       top_n(5,Totals)
+
+
+kable(sat_result4)
+
+```
+
+
+
