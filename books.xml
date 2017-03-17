@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<books>
+    <book id="1">
+        <Title>The Power of Positive Living</Title>
+        <Authors>John Norman, Vincent Peale</Authors>
+        <OriginallyPublished>1952</OriginallyPublished>
+        <Genres>Inspirational fiction, Philosophy, Children's literature</Genres>
+    </book>
+    <book id="2">
+        <Title>Mindset: The New Psychology of Success</Title>
+        <Authors>Carol Dweck</Authors>
+        <OriginallyPublished>2006</OriginallyPublished>
+        <Genres>Motivation</Genres>    
+    </book>
+    <book id="3">
+         <Title>Strengths Finder 2.0</Title>
+        <Authors>Tom Rath</Authors>
+        <OriginallyPublished>2001</OriginallyPublished>
+        <Genres>Leadership</Genres>    
+    </book>
+</books>
+
