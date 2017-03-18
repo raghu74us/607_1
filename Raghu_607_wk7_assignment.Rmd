@@ -1,0 +1,99 @@
+---
+title: "Raghu_607_WK7_Assignment"
+author: "Raghu Ramnath"
+date: "3/15/2017"
+output: 
+  html_document: 
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+    code_folding: hide
+---
+
+
+##Assignment Overview
+
+This assignment will focus on creating three files -- HTML, XML, and JSON -- to be parsed into R dataframes based on attributes of three selected books of interest. Using the attributes selected such as title and author, create three files which store the book's information in HTML 
+, XML, and JSON formats (e.g. "books.html", "books.xml", and "books.json").
+
+The goal of this assignment is to use R code and any R packages of choice to load the information from each of the three sources into separate R data frames.
+
+###Setup
+
+This assignment requires the following R packages:
+
+  + XML
+  + Rcurl
+  + Plyr
+  + jsonlite
+  + knitr
+
+```{r setup, include=FALSE}
+require(XML)
+require(RCurl)
+require(plyr)
+require(jsonlite)
+require(knitr)
+suppressWarnings(suppressMessages(library(XML)))
+suppressWarnings(suppressMessages(library(RCurl)))
+suppressWarnings(suppressMessages(library(plyr)))
+suppressWarnings(suppressMessages(library(jsonlite)))
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The following files are in GITHUB.
+
+  + books.html
+  + books.xml
+  + books.json
+
+### Parsing XML file
+
+```{r XML, include=TRUE}
+x <- "https://raw.githubusercontent.com/raghu74us/607_1/master/books.xml"
+x <- getURL(url=x)
+x1 <- xmlParse(x,useInternalNodes = TRUE,validate=F)
+x1
+x2 <- ldply(xmlToList(x1), data.frame)
+str(x2)
+kable(x2)
+```
+
+###Parsing JSON
+
+Load the file books.json from Github.
+
+```{r JSON, include=TRUE}
+j <- "https://raw.githubusercontent.com/raghu74us/607_1/master/books.json"
+j2 <- fromJSON(j)
+
+j2
+
+j3 = readLines(j)
+j3[5]
+
+str(j2)
+kable(j2)
+
+```
+
+
+###Parsing HTML
+
+Load the file books.html from Github.
+
+```{r HTML, include=TRUE}
+h <- "https://raw.githubusercontent.com/raghu74us/607_1/master/books.html"
+t <- getURL(url=h)
+h1 <- xmlParse(t,isHTML = TRUE,useInternalNodes = FALSE,validate = F)
+h1
+
+html <- readHTMLTable(t)
+str(html)
+html2DF<-as.data.frame.list(html)
+html2DF
+```
+
+### Conclusion:
+
+The data type is different for html vs xml vs JSON. Data type is Factor for Html  whereas char for JSON.  Also, XML structure has id and attrs variables. File format is different for JSON compared to HTML and XML.
