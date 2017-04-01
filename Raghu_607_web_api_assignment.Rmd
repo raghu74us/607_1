@@ -1,0 +1,94 @@
+---
+title: "Assignment – Web APIs"
+author: "Raghu Ramnath"
+date: "3/28/2017"
+output: 
+  html_document: 
+    highlight: pygments
+    theme: cosmo
+    toc: yes
+---
+
+```{r SETUP, include=FALSE}
+
+library(dplyr)
+library(httr)
+library(jsonlite)
+library(knitr)
+library(tidyjson)
+library(data.table)
+
+```
+
+
+```{r S1, include=TRUE}
+# Movie search API
+url1 <- "http://api.nytimes.com/svc/movies/v2/reviews/search.json?"
+key1 <- "api-key=109ff0ae5d9345fd93c50a873e45225c"
+kurl1 <- paste0(url1, key1)
+r <- GET(kurl1)
+r
+#response from API
+status_code(r)
+
+#check if the status is 200 which means success
+#JSON to data frame.
+
+if (status_code(r) == 200)
+ {movie_review <- fromJSON(kurl1)
+ }
+
+json_raw <- httr::content(r, type = "text", encoding = "UTF-8")
+
+## get the number of results
+results <- 
+    json_raw %>% 
+    enter_object("num_results") %>%
+    append_values_string("num_results") %>% 
+    select(num_results)
+
+results
+
+movie_review_df <- data.frame(movie_review$results)
+movie_review_df <-  data.frame(movie_review_df$display_title ,movie_review_df$mpaa_rating,movie_review_df$summary_short)
+colnames(movie_review_df) = c("Title","Rating","Summary")
+kable(movie_review_df)
+
+```
+
+
+```{r S2, include=TRUE}
+
+#Add conditions to the movie reviews API
+
+url2 <-  "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?"
+key2 <-  "api-key=109ff0ae5d9345fd93c50a873e45225c"
+query <- "&query=Black"
+pd <-    "&publication-date=2017-03-30"
+cp <-    "&critics-pick=Y"
+kurl2 <- paste0(url2, key2,query, pd,cp)
+kurl2
+
+r2 <- GET(kurl2)
+status_code(r2)
+if (status_code(r2) == 200)
+ {movie_review2 <- fromJSON(kurl2)
+ }
+
+movie_review_df2 <- data.frame(movie_review2)
+movie_review_df3 <-  data.frame(movie_review_df2$results.display_title,
+                                movie_review_df2$results.mpaa_rating,
+                                movie_review_df2$results.critics_pick,
+                                movie_review_df2$results.summary_short,
+                                movie_review_df2$results.publication_date
+                                )
+
+colnames(movie_review_df3) = c("Title","Rating","Pick","Summary","Date of Publication")
+
+movie_review_df4 <- data.frame(movie_review_df2$results.link)
+colnames(movie_review_df4) = c("Type","URL","Link_Text")
+
+movie <- cbind.data.frame(movie_review_df3,movie_review_df4)
+kable(movie)
+
+```
