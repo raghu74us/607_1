@@ -1,0 +1,212 @@
+---
+title: "607_Project4 Document Classification"
+author: "Raghu Ramnath"
+date: "4/6/2017"
+output: 
+  html_document: 
+    highlight: pygments
+    number_sections: yes
+    theme: cerulean
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+The corpus for this analysis is located here: https://spamassassin.apache.org/publiccorpus/
+
+Overview of quanteda:  1. Easy to manage texts in the form of a corpus. 2. quanteda includes tools to make it easy and fast to manuipulate the texts in a corpus, by performing the most common natural language processing tasks simply and quickly, such as tokenizing, stemming, or forming ngrams. quanteda’s functions for tokenizing texts and forming multiple tokenized documents into a document-feature matrix are both extremely fast and extremely simple to use. 3. quanteda can segment texts easily by words, paragraphs, sentences, or even user-supplied delimiters and tags.
+For details refer the below link
+https://cran.r-project.org/web/packages/quanteda/quanteda.pdf
+
+# Libraries
+
+```{r s0, include=TRUE}
+#The code for this assignment requires the following R packages:
+
+libr <- c("wordcloud","ggplot2","tm","plyr","class","stringr","stringi","RCurl","XML","SnowballC","R.utils","quanteda","class","knitr","Rweka","RTextTools")
+lapply( libr, require, character.only = TRUE)
+#Set Options
+Options(stringsAsFactors = FALSE)
+```
+
+#Step 1: List the spam files
+
+```{r s1, include=TRUE}
+
+spam_file_folder <- "/Users/Raghu/spamham/spam_2/"
+spam_file_names <- list.files(spam_file_folder)
+#check the files
+head(spam_file_names ,10)
+
+```
+
+#Step 2: Create functions 1.create corpus 2. Document feature matrix and 3. Data frame
+
+```{r s2, include=TRUE}
+createCorpus <- function(directory, emailType) {
+    
+    quantCorpus <- corpus(VCorpus(DirSource(directory = directory, encoding = "UTF-8-MAC"), 
+                                    readerControl = list(language="en_US")),
+                      notes=emailType)
+    
+    docvars(quantCorpus, "email_type") <- emailType
+    docvars(quantCorpus, "source")     <- directory
+    return(quantCorpus)
+}
+
+buildDFM <- function(corpus, minDoc, minCount) {
+    # create the document-feature matrix(DFM)
+    dfm <- dfm(corpus, ignoredFeatures = stopwords("english"), stem = TRUE)
+    # word should atleast occur 10 times in 2 documents
+    dfm <- dfm_trim(dfm, min_count = 10, min_docfreq = 2, sparsity = NULL, verbose = TRUE)
+    return(dfm)
+}
+
+create_df_matrix <- function(dfm, emailType) {
+    
+    # apply the tfidf function
+    #compute term frequency-inverse document frequency weights
+    mat <- data.matrix(tfidf(dfm))
+ 
+    # convert to a dataframe
+    df <- as.data.frame(mat, stringsAsFactors =  FALSE)
+    df$Source <- emailType
+     #str(df)    
+    return(df)
+}
+
+```
+
+#Step 3: Create spam corpus
+
+```{r s3, include=TRUE}
+
+spamCorpus <- createCorpus("/Users/Raghu/spamham/spam_2", "spam")
+summary(spamCorpus,10)
+
+```
+
+#Step 4: Create DFM(Document Feature Matrix) for Spam Corpus
+
+```{r s4, include=TRUE}
+dfmSpam <- buildDFM(spamCorpus, docnames(spamCorpus), 50)
+dfmSpam
+summary(dfmSpam,20)
+dim(dfmSpam)  
+topfeatures(dfmSpam, 20) 
+
+```
+
+#Step 5: Create Plot and word cloud for Spam
+
+```{r s5, include=TRUE}
+plot(topfeatures(dfmSpam, 100), log = "y", cex = .6, ylab = "Term frequency", main = "Top Features of Spam")
+
+textplot_wordcloud(dfmSpam, max.words = 100,random.color = TRUE, rot.per = .25, colors = sample(colors()[2:128], 5))
+
+```
+
+#Step 6: Create Ham corpus
+
+```{r s6, include=TRUE}
+
+hamCorpus <- createCorpus("/Users/Raghu/spamham/easy_ham", "ham")
+summary(hamCorpus,10)
+
+```
+
+#Step 7: Create DFM(Document Feature Matrix) for Ham corpus
+
+```{r s7, include=TRUE}
+dfmham <- buildDFM(hamCorpus, docnames(hamCorpus), 50)
+dfmham
+summary(dfmham,10)
+dim(dfmham)  
+topfeatures(dfmham, 20) 
+
+```
+
+
+#Step 8: Create Plot and wordcloud for Ham
+
+```{r s8, include=TRUE}
+plot(topfeatures(dfmham, 100), log = "y", cex = .6, ylab = "Term frequency", main = "Top Features of Ham")
+
+textplot_wordcloud(dfmham, max.words = 100,random.color = TRUE, rot.per = .25, colors = sample(colors()[2:128], 5))
+
+```
+
+#Step 9: Stack the DFM of Spam and Ham
+
+```{r s9, include=TRUE}
+dfSpam <- create_df_matrix(dfmSpam, "spam")  
+dfHam <- create_df_matrix(dfmham, "ham")  
+stacked.df <- rbind.fill(dfSpam, dfHam)
+
+#Stack the data frames of Spam and ham
+# set NA values to 0
+stacked.df[is.na(stacked.df)] <- 0
+dim(stacked.df)
+```
+
+#Step 10: Create the tree modal
+
+```{r s10, include=TRUE}
+
+tdm.email <- stacked.df[, "Source"]
+stacked.nl <- stacked.df[, !colnames(stacked.df) %in% "Source"]  
+n <- length(tdm.email)
+
+# taking the training size as 1000 which is one fourth of the whole size.
+container <- create_container(stacked.nl,
+            tdm.email, trainSize=1:1000,
+            testSize=1001:n, virgin=FALSE)
+
+slotNames(container)
+
+#MAXENT <- train_model(container,"MAXENT")
+#BOOSTING <- train_model(container,"BOOSTING")
+tree_model <- train_model(container, "TREE")
+
+#Having problems with MAXENT,SVM and BOOSTING.
+
+#MAXENT_out <- classify_model(container, MAXENT)
+#BOOSTING_out <- classify_model(container, BOOSTING)
+tree_model_out <- classify_model(container, tree_model)
+
+head(tree_model_out,5)
+
+labels_out <- data.frame(
+  correct_label = tdm.email[1001:n],
+  tree = as.character(tree_model_out[,1]),
+  stringAsFactors = F)
+
+#ensure the dataframe does not have factor columns
+labels_out$tree <- as.character(labels_out$tree)
+
+#TREE Performance
+table(labels_out[,1] == labels_out[,2])
+```
+
+#Step 11: Create KNN modal (k-Nearest Neighbor)
+
+```{r s11, include=TRUE}
+## Create training and test datasets 
+train.idx <- sample(nrow(stacked.df), ceiling(nrow(stacked.df) * 0.7))
+test.idx <- (1:nrow(stacked.df)) [-train.idx]
+head(train.idx,5)
+head(test.idx,5)
+length(train.idx)  
+length(test.idx)  
+
+#kNN prediction using the training and test datasets
+knn.pred <- knn(stacked.nl[train.idx, ], stacked.nl[test.idx, ], tdm.email[train.idx])
+conf.mat <- table("Predictions" = knn.pred, Actual = tdm.email[test.idx])
+conf.mat
+#df.pred <- cbind(knn.pred, stacked.nl[test.idx, ])
+#head(df.pred,5)
+
+```
+
+#Conclusion:
+Comparing the two modals- KNN and Tree, I could see that the predictions match. 397 Spam reported by these two modals.
