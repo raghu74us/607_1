@@ -1,0 +1,32 @@
+---
+title: "Raghu_607_Project4_Proposal"
+author: "Raghu"
+date: "4/20/2017"
+output: html_document
+---
+
+##Introduction
+
+          I have selected Adorama website for this project. It’s a NYC based retail store specialized in cameras and consumer electronics. Adorama offer the best selection and prices on professional photography and video gear, pro-audio, and consumer electronics such as home theaters, mobile computing, home office equipment and more.    They use “Turnto” company to capture their rating and reviews and provide recommendations. Turnto’s suite of shopping assistance tools makes merchants and brands more powerful, and users more informed. TurnTo helps online stores be relevant to the customers of today.
+
+##Scenario Analysis
+
+**1) Who are the target users?
+
+    Target users are end customers. End users need reviews, recommendations from other customers who bought the same product.  
+
+**2) What are the key goals?
+
+    Goal is to get more customers for the product by providing adequate information of the product and customer experiences.  Company has to sell more products. Customer has to get the right product and have satisfaction in terms of quality, price, feature etc.
+
+**3) How can you help them accomplish their goals?
+
+     We can create a modal to build the pros and cons based on the customer reviews. In addition to the traditional customer reviews, pictures taken by customers with reviews would provide more insight of the product.  We can also create a modal to build a summary on the Q&A which would help the customers to know more about the product.       Rather than browsing all the question and answers in detail, summary would save the customers time.
+
+##Reverse Engineering
+
+    The good thing about this site is it provides reviews on cameras from various type of customers/photographers like Beginners, Professionals, hobbyist, semi-pro etc. It provides a summarized rating, what percentage of reviewers recommended the product and Turnto make sure the reviews are from verified customers. Customer is also provided with “People who viewed this item also viewed”.   There is a compare section that lists 3 similar products. Turnto use content based filtering for recommendation.
+
+##Ways to Improve
+
+    The listing of pros and cons with key features and rating against it would add more value to the customer in terms of the product experience by other customers. It would really strengthen the recommendation. Since new electronic products are introduced frequently, the features are key selling points. Listing summary of Q&A would also improve.
