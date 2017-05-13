@@ -1,0 +1,468 @@
+---
+title: "607 Final Project: Sentiment Analysis on Camera Reviews "
+author: "Raghu"
+date: "May 12, 2017"
+output: 
+  html_document: 
+    code_folding: hide
+    fig_caption: yes
+    fig_height: 7
+    fig_width: 10
+    highlight: textmate
+    theme: cerulean
+    toc: yes
+    toc_float: yes
+---
+
+# Overview: 
+
+    In this Project, I am analyzing the sentiments of Consumer electronics, specifically on Camera reviews. I have taken 180 reviews of a camera from Adorama website. 
+
+# Libraries: 
+
+    Following libraries were used:
+    
+    rvest,stringr,RCurl,XML,stringr,httr,knitr,dplyr,RMySQL,mscstexta4r,jsonlite,tm,RWeka,
+    SnowballC,caret,rminer,kernlab,rpart,caTools,party,FSelector,class,randomForest,
+    RTextTools,syuzhet
+
+```{r setup, include=FALSE}
+
+libr <- c("rvest","stringr","RCurl","XML","stringr","httr","knitr","dplyr","RMySQL","mscstexta4r","jsonlite","tm","RWeka","SnowballC","caret","rminer","kernlab","rpart","caTools","party","FSelector","class","randomForest","RTextTools","syuzhet","slam","cluster","pandocfilters")
+
+lapply (libr,require,character.only=TRUE)
+
+```
+
+
+# Scraping: 
+
+    I initially started scraping in R. Since I was having issues like time out and its not working consistently, I used webscraper tool to extract the reviews.  
+
+```{r s2, include=TRUE }
+options(stringsAsFactors = FALSE)
+
+#site <- "https://www.adorama.com/r/inkd7100-reviews"
+u <- "https://www.adorama.com/r/inkd7100-reviews?StartAt="
+site <- lapply( seq(11,91,10), function(y){paste0(u, y, "#pr-review-sort")})
+
+#do.call(rbind,lapply(site, function(x) {
+#  
+#       (data.frame(url=x,
+#                   comments = read_html(GET(x,user_agent("myagent")))%>%
+#                     html_nodes(".pr-comments")%>%html_text(),
+#                   bot=read_html(GET(x,user_agent("myagent")))%>% #html_nodes(".pr-review-author-location")%>% html_text() %>%      str_replace("from" , "" ) #%>% str_replace_all( "\\r\\n" , "") %>% str_replace_all( "-" , "") %>% str_replace_all( "  " #, "") %>% trimws("l"))
+#
+#          )
+#  
+#}
+#) )-> df11
+
+#df <- merge (df, df, by=c("url","comments"))
+#df3 <- data.frame(df1)
+camera <- read.csv("C:/cuny/camera1.csv" ,header=TRUE,sep = ',')
+df3 <- data.frame(camera)
+sent <- get_nrc_sentiment(df3$comments)
+
+
+#if (sent$positive >= sent$negative) {
+#      df3$rating = "Positive"} else { df3$rating = "Negative"}
+
+df3$rating <- as.factor(ifelse(sent$positive >= sent$negative,"Positive","Negative"))
+
+```
+
+# Sentiment Scoring: 
+
+    I initially used the Text Analytics API from Microsoft Azure to get a scoring on the reviews and it worked fine. I got issues with the second set of reviews that I used. Thought the return code was success, I had "no applicable method for 'content' applied to an object of class "response" error. So, I used package syuzhet to get the sentiment score. 
+
+```{r s3, include=TRUE}
+#converting customer type to factor
+#trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+#df3$bot <- trim(df3$bot)
+#df3$bot <- str_replace(df3$bot,"","General")
+#df3$bot[df$bot==""] <- "Unknown"
+df3$bot <- as.factor(df3$bot)
+
+```
+
+
+```{r s4, include=TRUE}
+#sentiment scores
+# Below is the Request body for the API having text id 1 = Negative sentiments, id 2 = Positive sentiments
+
+#docsLanguage <- rep("en", length(df3$comments))
+#revseq<-seq(1,length(df3$comments), by =1)
+
+#request_body <- data.frame(
+#language = docsLanguage,
+#id = revseq, 
+#text = df3$comments
+#)
+
+#request_body
+
+# Converting the Request body(Dataframe) to Request body(JSON)
+
+#request_body_json <- toJSON(list(documents = request_body), auto_unbox = TRUE)
+
+#request_body_json
+
+# Below we are calling API (Adding Request headers using add_headers)
+
+#result1 <- POST("https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment",
+#body = request_body_json,
+#add_headers(.headers = c("Content-Type"="application/json",
+#                         "Ocp-Apim-Subscription-Key"="e53ce6ebbdeb4be68dd85bc722418e23",
+#                         "Accept" = "application/json")))
+
+#Outputx <- content(result1)
+
+#raw_contents <- result1$content  
+#json_raw <- httr::content(raw_contents, type = "text")
+
+# Show Output
+#data2 <- toJSON(Output)
+#d2<-jsonlite::fromJSON(data2, simplifyDataFrame = TRUE)
+
+#df3$score <- d2$documents$score
+#df3$id    <- d2$documents$id
+
+```
+
+
+# Data Set: 
+
+    This data set has 180 reviews by different customer type.
+
+```{r s5, include=TRUE}
+
+#Plot
+barplot(prop.table(table(df3$bot)), main = "Reviews by Customer Type", xlab="Customer Type", ylab = "Review Count")
+
+#df3$rating[df3$score >= 0.6] <- "Positive"
+#df3$rating[df3$score < 0.6] <- "Negative"
+#df3$rating <- as.factor(df3$rating)
+
+#write.csv(df1, file = "camera.csv", row.names = FALSE)
+
+
+
+```
+
+# Train and Test Data Set
+
+```{r s6, include=TRUE}
+#Analyze 
+
+#Prepare train and test
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(df3))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(df3)), size = smp_size)
+
+train <- df3[train_ind, ]
+test <- df3[-train_ind, ]
+
+nrow(train)
+summary(train)
+nrow(test)
+summary(test)
+
+barplot(prop.table(table(train$rating)),main = "Review Rating in Training Data", ylab = "Review Count")
+barplot(prop.table(table(test$rating)),main = "Review Rating in Test Data ", ylab = "Review Count")
+
+
+train_corpus <- Corpus(VectorSource(train$comments))
+length(train_corpus)
+
+train_corpus <- tm_map(train_corpus, content_transformer(tolower))
+train_corpus <- tm_map(train_corpus, removeWords, stopwords("english") )
+train_corpus <- tm_map(train_corpus, removePunctuation)
+train_corpus <- tm_map(train_corpus, removeNumbers)
+train_corpus <- tm_map(train_corpus, stripWhitespace)
+
+train_corpus_st <- tm_map(train_corpus, stemDocument,language="english" )
+#Document term matrix
+train_dtm <- DocumentTermMatrix(train_corpus_st)
+dim(train_dtm)
+train_rmspa <- removeSparseTerms(train_dtm,0.95)
+dim(train_rmspa)
+#show the avg frequency of top 20 frequent words 
+mean_train = sort(colMeans(as.matrix(train_rmspa)), decreasing = T)
+mean_train[1:20]
+
+avg_top20=mean(mean_train[1:20])
+avg_top20
+
+barplot(mean_train[1:20], border=NA, las =3, main ='Top 20 words (by mean) of training data', ylab='Frequency', ylim=c(0,3))
+
+tr_rmspa_m_no_zero=as.matrix(train_rmspa)
+#convert zeros to NA.
+is.na(tr_rmspa_m_no_zero) <- tr_rmspa_m_no_zero==0
+# calculate mean without taking NA
+
+mean_tr_m = sort(colMeans(as.matrix(tr_rmspa_m_no_zero ), na.rm = T), decreasing = T)
+mean_tr_m[1:20]
+#average frequency of these top 20 words
+
+avg_top20=mean(mean_tr_m[1:20])
+avg_top20
+
+barplot(mean_tr_m[1:20], border=NA, las =3, main='Top 20 words(after removing NA from Matrix)', ylab='Frequency', ylim=c(0,3))
+
+
+```
+
+# Sentiment classification:
+
+     Sentiment classification is done based on the frequence of the terms.
+
+```{r s7, include=TRUE}
+#############################################################
+#Sentiment classification
+train_bow_freq <- as.matrix(train_rmspa)
+#combine the rating with term frequencies of the BOW in training data frame.
+train_data_m=data.frame(y=as.factor(train$rating), x= train_bow_freq)
+#summary(train_data_m)
+#head(str(train_data_m),5)
+
+train_bow_m = findFreqTerms(train_rmspa)
+length(train_bow_m)
+##Test data
+test_corpus <- Corpus(VectorSource(test$comments))
+#generate test DTM based on training list of words.
+bow_test_m <- DocumentTermMatrix(test_corpus, control = list(tolower = T,stopwords = T,  removePunctuation = T,removeNumbers = T, stripWhitespace = T, stemming = T, dictionary = train_bow_m) )
+
+#head(str(bow_test_m),5)
+dim (bow_test_m)
+# transform to matrix.
+test_bowfreq_m <- as.matrix(bow_test_m)
+# combine the sentiment rating with term freq of the bow in test data frame.
+test_data_m <- data.frame(y=as.factor(test$rating), x= test_bowfreq_m)
+#head(str(test_data_m),5)
+
+
+```
+
+## NB Modal for Term Frequency
+
+```{r s8, include=TRUE}
+library(e1071)
+
+#Build Naive Bayes  Modal on training data set.
+bow_nb_m <- naiveBayes(y ~., data = train_data_m)
+summary(bow_nb_m)
+##generate prediction for testing data
+testpred = predict(bow_nb_m, newdata=test_data_m)  
+
+confusionMatrix(testpred, test_data_m[,1], positive="Positive",dnn=c("Prediction","True"))
+mmetric(testpred,test_data_m[,1], c("ACC","TPR","PRECISION","F1"))
+
+```
+
+## Binary Weights:
+
+    Sentiment classification is done based on Binary Weights rather than term frequency to compare between the two.
+
+```{r s9, include=TRUE}
+#Binary Weights
+
+#Document term matrix with binary weights
+
+train_bin_dtm <- DocumentTermMatrix(train_corpus_st, control=list(weighting=weightBin))
+dim(train_bin_dtm)
+#head(str(train_bin_dtm),5)
+train_rmspa_bin_dtm = removeSparseTerms(train_bin_dtm,0.95)
+dim(train_rmspa_bin_dtm)
+#bag of words
+train_bow_95 = findFreqTerms(train_rmspa_bin_dtm)
+#transfor to matrix
+train_bow_bin <- as.matrix(train_rmspa_bin_dtm)
+
+#show the avg frequency of top 20 frequent words 
+mean_train_bin = sort(colMeans(as.matrix(train_bow_bin)), decreasing = T)
+mean_train_bin[1:20]
+
+avg_top20_bin=mean(mean_train_bin[1:20])
+avg_top20_bin
+
+barplot(mean_train_bin[1:20], border=NA, las =3, main ='Top 20 words(Binary Weights)', ylab='Frequency', ylim=c(0,1))
+
+#combine the rating with term frequencies of the BOW in training data frame.
+train_data_bin_m=data.frame(y=as.factor(train$rating), x= train_bow_bin)
+#summary(train_data_m)
+#head(str(train_data_bin_m),5)
+dim(train_data_bin_m)
+
+##Test data
+#test_corpus 
+#generate test DTM based on training list of words.
+test_dtm_bin <- DocumentTermMatrix(test_corpus, control = list(tolower = T,stopwords = T,  removePunctuation = T,removeNumbers = T, stripWhitespace = T, stemming = T, dictionary = train_bow_95, list(weighting= weightBin)  ))
+
+#head(str(test_dtm_bin),5)
+dim (test_dtm_bin)
+
+# transform to matrix.
+test_dtm_bin_m <- as.matrix(test_dtm_bin)
+# combine the sentiment rating with term freq of the bow in test data frame.
+test_data_dtm_bin_m <- data.frame(y=as.factor(test$rating), x= test_dtm_bin_m)
+#head(str(test_data_dtm_bin_m),5)
+dim(test_data_dtm_bin_m)
+
+library(e1071)
+#Build Naive Bayes  Modal on training data set.
+bow_nb_bin_m <- naiveBayes(y ~., data = train_data_bin_m)
+summary(bow_nb_bin_m)
+##generate prediction for testing data
+testpred = predict(bow_nb_bin_m, newdata=test_data_dtm_bin_m)  
+
+confusionMatrix(testpred, test_data_dtm_bin_m[,1], positive="Positive",dnn=c("Prediction","True"))
+mmetric(testpred,test_data_dtm_bin_m[,1], c("ACC","TPR","PRECISION","F1"))
+
+
+```
+
+
+## TfIdf:
+
+    Sentiment classification using Term Frequency Inverse Document Frequency- TfIdf. 
+
+```{r s10, include=TRUE}
+#TfIdf
+
+#Document term matrix with binary weights
+
+train_tfidf_dtm <- DocumentTermMatrix(train_corpus_st, control=list(weighting=weightTfIdf))
+dim(train_tfidf_dtm)
+#head(str(train_bin_dtm),5)
+train_rmspa_tfidf_dtm = removeSparseTerms(train_tfidf_dtm,0.95)
+dim(train_rmspa_tfidf_dtm)
+#bag of words
+train_bow_95 = findFreqTerms(train_rmspa_tfidf_dtm)
+#transfor to matrix
+train_bow_tfidf <- as.matrix(train_rmspa_tfidf_dtm)
+
+#show the avg frequency of top 20 frequent words 
+mean_train_tfidf = sort(colMeans(as.matrix(train_bow_tfidf)), decreasing = T)
+mean_train_tfidf[1:20]
+
+avg_top20_tfidf=mean(mean_train_tfidf[1:20])
+avg_top20_tfidf
+
+barplot(mean_train_tfidf[1:20], border=NA, las =3, main ='Top 20 words(tfidf weights) in Training data', ylab='Frequency', ylim=c(0,0.5))
+
+#combine the rating with term frequencies of the BOW in training data frame.
+train_data_tfidf_m=data.frame(y=as.factor(train$rating), x= train_bow_tfidf)
+#summary(train_data_m)
+#head(str(train_data_bin_m),5)
+dim(train_data_tfidf_m)
+
+##Test data
+#test_corpus 
+#generate test DTM based on training list of words.
+test_dtm_tfidf <- DocumentTermMatrix(test_corpus, control = list(tolower = T,stopwords = T,  removePunctuation = T,removeNumbers = T, stripWhitespace = T, stemming = T, dictionary = train_bow_95, list( weighting= weightTfIdf)  ))
+
+#head(str(test_dtm_bin),5)
+dim (test_dtm_tfidf)
+
+# transform to matrix.
+test_dtm_tfidf_m <- as.matrix(test_dtm_tfidf)
+# combine the sentiment rating with term freq of the bow in test data frame.
+test_data_dtm_tfidf_m <- data.frame(y=as.factor(test$rating), x= test_dtm_tfidf_m)
+#head(str(test_data_dtm_bin_m),5)
+dim(test_data_dtm_tfidf_m)
+
+library(e1071)
+#Build Naive Bayes  Modal on training data set.
+bow_nb_tfidf_m <- naiveBayes(y ~., data = train_data_tfidf_m)
+summary(bow_nb_tfidf_m)
+##generate prediction for testing data
+testpred = predict(bow_nb_tfidf_m, newdata=test_data_dtm_tfidf_m)  
+
+confusionMatrix(testpred, test_data_dtm_tfidf_m[,1], positive="Positive", dnn=c("Prediction","True"))
+mmetric(testpred,test_data_dtm_tfidf_m[,1], c("ACC","TPR","PRECISION","F1"))
+
+
+```
+
+
+# N-gram Analysis: 
+
+```{r s11, include=TRUE}
+
+dtm.docs <- train_dtm
+docs.s <- train_corpus_st
+
+sums <- colapply_simple_triplet_matrix(dtm.docs,FUN=sum)
+sums <- sort(sums, decreasing=T)
+# Functions
+BigramTokenizer <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min=2, max=2))}
+ThreegramTokenizer <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min=3, max=3))}
+FourgramTokenizer <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min=4, max=4))}
+
+# Bigrams
+options(mc.cores=1)
+dtm.docs.2g <- DocumentTermMatrix(docs.s, control=list(tokenize=BigramTokenizer))
+
+#Threegrams
+options(mc.cores=1)
+dtm.docs.3g <- DocumentTermMatrix(docs.s, control=list(tokenize=ThreegramTokenizer))
+
+#Fourgrams
+options(mc.cores=1)
+dtm.docs.4g <- DocumentTermMatrix(docs.s, control=list(tokenize=FourgramTokenizer))
+# freqTerms.4g.docs <- findFreqTerms(dtm.docs.4g,20,Inf)
+
+# To get the bigram dist
+sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+sums.2g <- sort(sums.2g, decreasing=T)
+
+# To get the threegram dist
+sums.3g <- colapply_simple_triplet_matrix(dtm.docs.3g,FUN=sum)
+sums.3g <- sort(sums.3g, decreasing=T)
+
+# To get the fourgram dist
+sums.4g <- colapply_simple_triplet_matrix(dtm.docs.4g,FUN=sum)
+sums.4g <- sort(sums.4g, decreasing=T)
+
+barplot(sums.2g[1:20], border=NA, las =3, main ='Bigram Distribution of Top 20 frequent words', ylab='Count', ylim=c(0,300))
+
+barplot(sums.3g[1:20], border=NA, las =3, main ='Three gram Distribution of Top 20 frequent words', ylab='Count', ylim=c(0,300))
+
+barplot(sums.4g[1:20], border=NA, las =3, main ='Four gram Distribution of Top 20 frequent words', ylab='Count', ylim=c(0,300))
+
+
+```
+
+
+
+# K Mean: 
+
+  kMean plot using the Top 20 frequent words from the 4 gram dist of training data.
+
+```{r s12, include=TRUE}
+
+m <- as.matrix(sums.4g[1:20])
+d <-dist(m)
+
+#k means algorithm, 3 clusters, 
+kfit <- kmeans(d, 3, nstart=5)
+#plot
+clusplot(m, kfit$cluster, color=T, shade=T, labels=2, lines=0)
+
+
+```
+
+# Conclusion: 
+
+  Based on the comparison of modals using term frequency, binary weights and tfidf, the observation is,  Accuracy, F1 measure and all metrics has improved a lot with tfidf. Also rear terms have been promoted using tfidf as it measures how important a term is. Lot of positive words reported by IDF that did not appear with term frequency or binary weights. I believe the metrics will be even higher with a larger data set. 
+
+# References
+
+![](C:\cuny\P2.PNG)
+![](C:\cuny\P1.PNG)
+![](C:\cuny\P3.PNG)
+![](C:\cuny\P4.PNG)
